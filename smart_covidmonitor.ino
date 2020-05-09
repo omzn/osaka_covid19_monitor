@@ -34,9 +34,9 @@
 #define TFT_DARKYELLOW M5.Lcd.color565(180, 140, 0)
 #define TFT_DARKDARKYELLOW M5.Lcd.color565(60, 60, 0)
 
-//WebServer webServer(80);
-//NTP ntp("ntp.nict.jp");
-//RTC_Millis rtc;
+// WebServer webServer(80);
+// NTP ntp("ntp.nict.jp");
+// RTC_Millis rtc;
 Preferences prefs;
 WiFiManager wifimanager;
 unsigned long etime;
@@ -99,7 +99,7 @@ void drawFrame() {
   M5.Lcd.drawString("Osaka", 12, 54);
   M5.Lcd.drawString("model", 20, 72);
   FONT_SANS6PT;
-//  M5.Lcd.drawString("Osaka model", 12, 80);
+  //  M5.Lcd.drawString("Osaka model", 12, 80);
 }
 
 void drawMagi(int color_up, int color_left, int color_right) {
@@ -226,30 +226,30 @@ void drawMagi(int color_up, int color_left, int color_right) {
   }
 
   FONT_SANS9PT;
-  M5.Lcd.drawString("2020-" + String(covid_month) + "-" + String(covid_day), 12, 100);
+  M5.Lcd.drawString("2020-" + String(covid_month) + "-" + String(covid_day), 12,
+                    100);
 
   if (covid_signalcolor == 1) {
     M5.Lcd.pushImage(228, 55, resultWidth, resultHeight, r_red);
-  } else   if (covid_signalcolor == 2) {
+  } else if (covid_signalcolor == 2) {
     M5.Lcd.pushImage(228, 55, resultWidth, resultHeight, r_yellow);
-  } else   if (covid_signalcolor == 3) {
+  } else if (covid_signalcolor == 3) {
     M5.Lcd.pushImage(228, 55, resultWidth, resultHeight, r_green);
   }
 
   FONT_7SEG16PT;
-  M5.Lcd.setTextColor(FGCOLOR,color_up);
+  M5.Lcd.setTextColor(FGCOLOR, color_up);
   M5.Lcd.drawFloat(covid_unknown, 1, 132, 61);
 
-  M5.Lcd.setTextColor(FGCOLOR,color_left);
+  M5.Lcd.setTextColor(FGCOLOR, color_left);
   M5.Lcd.drawFloat(covid_positive, 1, 50, 180);
 
-  M5.Lcd.setTextColor(FGCOLOR,color_right);
+  M5.Lcd.setTextColor(FGCOLOR, color_right);
   M5.Lcd.drawFloat(covid_bed, 1, 200, 180);
 
   FONT_SANS9PT;
   M5.Lcd.drawString("%", 120, 195);
   M5.Lcd.drawString("%", 285, 195);
-
 }
 
 void getCovidOsakaStatus() {
@@ -406,6 +406,7 @@ void setup() {
   FONT_7SEG16PT;
   M5.Lcd.setTextColor(FGCOLOR, BGCOLOR);
 
+  M5.Lcd.fillScreen(BGCOLOR);
   drawFrame();
   getCovidOsakaStatus();
   drawMagi(covid_unknown >= COVID_UNKNOWN_TH ? FG_RED : FG_BLUE,
@@ -413,12 +414,12 @@ void setup() {
            covid_bed >= COVID_BED_TH ? FG_RED : FG_BLUE);
 
   is_error = 1;
-//  ntp.begin();
+  //  ntp.begin();
   //  webServer.begin();
-//  uint32_t epoch = ntp.getTime();
-//  if (epoch > 0) {
-//    rtc.adjust(DateTime(epoch + SECONDS_UTC_TO_JST));
-//  }
+  //  uint32_t epoch = ntp.getTime();
+  //  if (epoch > 0) {
+  //    rtc.adjust(DateTime(epoch + SECONDS_UTC_TO_JST));
+  //  }
   etime = millis();
 }
 
@@ -429,6 +430,12 @@ void loop() {
 
   if (millis() > etime + 60 * 60 * 1000) {
     etime = millis();
+    M5.Lcd.fillScreen(BGCOLOR);
+    drawFrame();
+    getCovidOsakaStatus();
+    drawMagi(covid_unknown >= COVID_UNKNOWN_TH ? FG_RED : FG_BLUE,
+             covid_positive >= COVID_POSITIVE_TH ? FG_RED : FG_BLUE,
+             covid_bed >= COVID_BED_TH ? FG_RED : FG_BLUE);
   }
   delay(10);
 }
