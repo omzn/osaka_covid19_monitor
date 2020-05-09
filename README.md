@@ -1,15 +1,8 @@
-# Tank monitor for M5Stack
+# COVID-19 Osaka Status monitor for M5Stack
 
-This is a part of the aqua-tan tank management system.
+Get COVID-19 information from the website of Osaka Prefecture and show in the screen.
 
-https://github.com/omzn/smart_cooler
-https://github.com/omzn/smart_lighting
-https://github.com/omzn/smart_feeder
-
-This monitor gets json responses from above units and displays them on the LCD monitor.
-
-See the following tweet.
-https://twitter.com/omzn/status/1257613966240407554
+* data source: http://www.pref.osaka.lg.jp/default.html
 
 ### References
 
