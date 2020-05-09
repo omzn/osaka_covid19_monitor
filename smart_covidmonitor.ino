@@ -26,9 +26,9 @@
 #define DEG2RAD 0.0174532925
 
 #define FONT_7SEG16PT M5.Lcd.setFont(&DSEG7Classic_BoldItalic16pt7b)
-#define FONT_7SEG9PT M5.Lcd.setFont(&DSEG7Classic_BoldItalic9pt7b)
+//#define FONT_7SEG9PT M5.Lcd.setFont(&DSEG7Classic_BoldItalic9pt7b)
 #define FONT_SANS9PT M5.Lcd.setFont(&FreeSans9pt7b)
-#define FONT_SANS6PT M5.Lcd.setFont(&FreeSans6pt7b)
+//#define FONT_SANS6PT M5.Lcd.setFont(&FreeSans6pt7b)
 
 #define TFT_DARKRED M5.Lcd.color565(140, 0, 0)
 #define TFT_DARKYELLOW M5.Lcd.color565(180, 140, 0)
@@ -98,7 +98,7 @@ void drawFrame() {
   M5.Lcd.drawString("COVID-19", 120, 125);
   M5.Lcd.drawString("Osaka", 12, 54);
   M5.Lcd.drawString("model", 20, 72);
-  FONT_SANS6PT;
+  //FONT_SANS6PT;
   //  M5.Lcd.drawString("Osaka model", 12, 80);
 }
 
@@ -349,7 +349,7 @@ void setup() {
   M5.begin();
   Serial.begin(115200);
   Serial.println("Booting");
-  rtc.begin(DateTime(2019, 5, 1, 0, 0, 0));
+//  rtc.begin(DateTime(2019, 5, 1, 0, 0, 0));
   prefs.begin("covid19osaka", false);
 
   M5.Power.begin();
