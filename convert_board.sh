@@ -13,8 +13,7 @@ const uint16_t resultWidth = 80;
 const uint16_t resultHeight = 60;
 
 EOM
-#for f in bed_b bed_r posi_b posi_r unknown_b unknown_r p_file p_result r_red r_green r_yellow; do
-
-for f in r_red r_green r_yellow ; do
+for f in inc_b inc_r bed_b bed_r posi_b posi_r unknown_b unknown_r p_file p_result r_red r_green r_yellow; do
+#for f in r_red r_green r_yellow ; do
   tail -n +15 $f.c  
 done
