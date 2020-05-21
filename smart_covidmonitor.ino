@@ -19,6 +19,7 @@
 
 #include "board.h"
 
+#define COVID_UNKRATE_TH 1
 #define COVID_UNKNOWN_TH 10
 #define COVID_POSITIVE_TH 7
 #define COVID_BED_TH 60
@@ -43,8 +44,9 @@ unsigned long etime;
 int is_error = 0;
 String payload;
 
-float covid_unknown, covid_positive, covid_bed;
+float covid_unknown_ratio, covid_unknown, covid_positive, covid_bed;
 int covid_month, covid_day, covid_signalcolor;
+int covid_mode;
 
 // TFT_eSprite img(&M5Stack::Lcd);
 
@@ -219,10 +221,26 @@ void drawMagi(int color_up, int color_left, int color_right) {
   M5.Lcd.fillTriangle(320 - 110, 132, 320 - 110, 160, 320 - 138, 160,
                       color_right);
 
-  if (color_right == FG_BLUE) {
-    M5.Lcd.pushImage(220, 136, panelWidth, panelHeight, bed_b);
+  if (covid_mode == 1) {
+    if (color_right == FG_BLUE) {
+      M5.Lcd.pushImage(220, 136, panelWidth, panelHeight, bed_b);
+    } else {
+      M5.Lcd.pushImage(220, 136, panelWidth, panelHeight, bed_r);
+    }
+    FONT_7SEG16PT;
+    M5.Lcd.setTextColor(FGCOLOR, color_right);
+    M5.Lcd.drawFloat(covid_bed, 1, 200, 180);
+    FONT_SANS9PT;
+    M5.Lcd.drawString("%", 285, 195);
   } else {
-    M5.Lcd.pushImage(220, 136, panelWidth, panelHeight, bed_r);
+    if (color_right == FG_BLUE) {
+      M5.Lcd.pushImage(220, 136, panelWidth, panelHeight, inc_b);
+    } else {
+      M5.Lcd.pushImage(220, 136, panelWidth, panelHeight, inc_r);
+    }
+    FONT_7SEG16PT;
+    M5.Lcd.setTextColor(FGCOLOR, color_right);
+    M5.Lcd.drawFloat(covid_unknown_ratio, 1, 200, 180);
   }
 
   FONT_SANS9PT;
@@ -241,15 +259,13 @@ void drawMagi(int color_up, int color_left, int color_right) {
   M5.Lcd.setTextColor(FGCOLOR, color_up);
   M5.Lcd.drawFloat(covid_unknown, 1, 132, 61);
 
+  FONT_7SEG16PT;
   M5.Lcd.setTextColor(FGCOLOR, color_left);
   M5.Lcd.drawFloat(covid_positive, 1, 50, 180);
-
-  M5.Lcd.setTextColor(FGCOLOR, color_right);
-  M5.Lcd.drawFloat(covid_bed, 1, 200, 180);
-
   FONT_SANS9PT;
   M5.Lcd.drawString("%", 120, 195);
-  M5.Lcd.drawString("%", 285, 195);
+
+
 }
 
 void getCovidOsakaStatus() {
@@ -268,6 +284,7 @@ void getCovidOsakaStatus() {
     if (httpCode == HTTP_CODE_OK) {
       payload = http.getString();
 
+      // get signal color
       // 色(90 46) -> この直前2バイトが 赤(90 d4)，黄(89 a9)，緑(97 ce)
       String signalstr = getSubstringFromTo(&payload, "<h2>", "</h2>", 1);
 
@@ -280,6 +297,7 @@ void getCovidOsakaStatus() {
       } else {
         covid_signalcolor = 0;
       }
+      // get date
       getSubstringFromTo(&payload, "rowspan=\"2\"", "WIDTH", 0);
       String date = getSubstringFromTo(&payload, ";\">", "</br>", 0);
       USE_SERIAL.println(date);
@@ -298,9 +316,22 @@ void getCovidOsakaStatus() {
       }
       covid_month = month.toInt();
       covid_day = day.toInt();
+      // get (1) 感染経路不明者の前週増加比
+      getSubstringFromTo(&payload, "rowspan=\"2\"", ">", 0);
 
-      getSubstringFromTo(&payload, "#ccccff", "class", 0);
-      String rawstr = getSubstringFromTo(&payload, ";\">", "</td>", 0);
+      String rawstr = getSubstringFromTo(&payload, "red-txt\"", ">", 0);
+      Serial.println(rawstr);
+      if (rawstr != "") {
+        covid_mode = 0;
+      } else {
+        covid_mode = 1;
+      }
+      String unknown_ratio = getSubstringFromTo(&payload, ">", "</td>", 0);
+      USE_SERIAL.println(unknown_ratio);
+      covid_unknown_ratio = unknown_ratio.toFloat();
+
+      getSubstringFromTo(&payload, "class=\"red-txt", "\"", 0);
+      rawstr = getSubstringFromTo(&payload, ">", "</td>", 0);
       String unknown;
       for (int i = 0; i <= rawstr.length(); i++) {
         if (rawstr.charAt(i) >= '0' && rawstr.charAt(i) <= '9' ||
@@ -311,8 +342,8 @@ void getCovidOsakaStatus() {
       USE_SERIAL.println(unknown);
       covid_unknown = unknown.toFloat();
 
-      getSubstringFromTo(&payload, "#ccccff", "class", 0);
-      rawstr = getSubstringFromTo(&payload, ";\">", "</td>", 0);
+      getSubstringFromTo(&payload, "class=\"red-txt", "\"", 0);
+      rawstr = getSubstringFromTo(&payload, ">", "</td>", 0);
       String posi;
       for (int i = 0; i <= rawstr.length(); i++) {
         if (rawstr.charAt(i) >= '0' && rawstr.charAt(i) <= '9' ||
@@ -323,8 +354,8 @@ void getCovidOsakaStatus() {
       USE_SERIAL.println(posi);
       covid_positive = posi.toFloat();
 
-      getSubstringFromTo(&payload, "#ccccff", "class", 0);
-      rawstr = getSubstringFromTo(&payload, ";\">", "</td>", 0);
+      getSubstringFromTo(&payload, "class=\"red-txt", "\"", 0);
+      rawstr = getSubstringFromTo(&payload, ">", "</td>", 0);
       String bed;
       for (int i = 0; i <= rawstr.length(); i++) {
         if (rawstr.charAt(i) >= '0' && rawstr.charAt(i) <= '9' ||
@@ -409,11 +440,14 @@ void setup() {
   M5.Lcd.fillScreen(BGCOLOR);
   drawFrame();
   getCovidOsakaStatus();
+// test  
+//  covid_unknown = 10; covid_positive = 7.5; covid_bed = 32.4;
+//  covid_month = 5; covid_day = 1; covid_signalcolor = 1;
   drawMagi(covid_unknown >= COVID_UNKNOWN_TH ? FG_RED : FG_BLUE,
            covid_positive >= COVID_POSITIVE_TH ? FG_RED : FG_BLUE,
-           covid_bed >= COVID_BED_TH ? FG_RED : FG_BLUE);
+           covid_mode == 1 ? (covid_bed >= COVID_BED_TH ? FG_RED : FG_BLUE) : (covid_unknown_ratio >= COVID_UNKRATE_TH ? FG_RED : FG_BLUE) );
 
-  is_error = 1;
+  //is_error = 1;
   //  ntp.begin();
   //  webServer.begin();
   //  uint32_t epoch = ntp.getTime();
@@ -435,7 +469,7 @@ void loop() {
     getCovidOsakaStatus();
     drawMagi(covid_unknown >= COVID_UNKNOWN_TH ? FG_RED : FG_BLUE,
              covid_positive >= COVID_POSITIVE_TH ? FG_RED : FG_BLUE,
-             covid_bed >= COVID_BED_TH ? FG_RED : FG_BLUE);
+             covid_mode == 1 ? (covid_bed >= COVID_BED_TH ? FG_RED : FG_BLUE) : (covid_unknown_ratio >= COVID_UNKRATE_TH ? FG_RED : FG_BLUE) );
   }
   delay(10);
 }
